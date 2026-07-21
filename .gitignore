@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtualenv
+.venv/
+venv/
+
+# Built warehouse / local artifacts
+*.duckdb
+*.duckdb.wal
+warehouse.duckdb
+
+# Test / tooling
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

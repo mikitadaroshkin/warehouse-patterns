@@ -1,0 +1,6 @@
+# Runtime + test dependencies for the star-schema demo.
+# The demo runs on DuckDB (pure-Python wheel, CPU-only, no server to stand up).
+duckdb>=1.0,<2.0
+
+# Tests
+pytest>=8.0
