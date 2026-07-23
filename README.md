@@ -1,6 +1,6 @@
 # warehouse-patterns
 
-A senior BI engineer's reference on dimensional modelling - star schemas,
+A working reference on dimensional modelling - star schemas,
 slowly-changing dimensions, grain, conformed dimensions and the ETL/SSIS loading
 pattern - written up as prose *and* backed by a small star schema you can build
 and query on synthetic data.
