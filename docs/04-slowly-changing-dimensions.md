@@ -1,12 +1,12 @@
 # Slowly-changing dimensions
 
 Dimension attributes change: a customer moves city, a product is reclassified, a
-sales rep changes territory. A **slowly-changing dimension** (SCD) is the policy
+sales rep changes territory. A slowly-changing dimension (SCD) is the policy
 for what the warehouse does when a source attribute you care about changes. The
 policy is chosen *per attribute*, and the choice is a business decision about
 history, not a technical one.
 
-## Type 1 — overwrite
+## Type 1 - overwrite
 
 Update the value in place. No history is kept; the dimension always reflects the
 latest state.
@@ -22,13 +22,13 @@ WHERE  customer_id = 5001
 Use Type 1 for attributes where history is meaningless or the change is a
 *correction*: a fixed typo, a standardised spelling, a data-quality patch. After a
 Type-1 update, every historical report re-states as if the value had always been
-the new one — which is exactly what you want for a correction and exactly what you
-do **not** want for a real-world change.
+the new one - which is exactly what you want for a correction and exactly what you
+do not want for a real-world change.
 
-## Type 2 — add a new version
+## Type 2 - add a new version
 
 Preserve history by inserting a *new row* for the changed entity and expiring the
-old one. The natural key is now shared by several rows — one per version — and each
+old one. The natural key is now shared by several rows - one per version - and each
 version is bracketed by a validity window and flagged.
 
 ```sql
@@ -57,10 +57,10 @@ customer_key | customer_id | segment   | city       | valid_from | valid_to   | 
 
 Two invariants make this correct:
 
-- **The windows tile the timeline.** `valid_to` of one version equals `valid_from`
-  of the next; the current version runs to `9999-12-31`. No gaps, no overlaps — so
+- The windows tile the timeline. `valid_to` of one version equals `valid_from`
+  of the next; the current version runs to `9999-12-31`. No gaps, no overlaps - so
   every date maps to exactly one version.
-- **Exactly one current row per natural key.** `is_current` is a convenience flag
+- Exactly one current row per natural key. `is_current` is a convenience flag
   for "give me the latest"; it must be true for precisely one row per `customer_id`.
 
 ### Why the fact points at the version, not the customer
@@ -84,11 +84,11 @@ flowchart TD
 The demo proves the payoff with one query: attributing sales to the customer
 segment *as of the sale* (join on the fact's `customer_key`) versus *restating*
 everything to each customer's current segment (hop to the current version via the
-natural key). The grand totals match — same money — but the per-segment split
+natural key). The grand totals match - same money - but the per-segment split
 differs, and that difference is precisely the history a Type-1 overwrite would have
 erased.
 
-## Type 3 — previous-value column
+## Type 3 - previous-value column
 
 Keep a single prior value in an extra column (`current_region`, `previous_region`).
 Cheap, but it remembers only *one* step of history and only for attributes you
@@ -104,8 +104,8 @@ poor substitute for full Type-2 history.
 | Product reclassified into a new category | Type 2 | last year's numbers stay in the old category |
 | Standardised a code's spelling | Type 1 | cosmetic, no analytical meaning |
 
-Most real dimensions are **hybrid**: some columns Type 1, some Type 2, in the same
-table. Decide attribute by attribute, and write the choice down — it is the kind of
+Most real dimensions are hybrid: some columns Type 1, some Type 2, in the same
+table. Decide attribute by attribute, and write the choice down - it is the kind of
 decision a future analyst will otherwise reverse-engineer from surprising numbers.
 The loader in this repo tracks `segment`, `city` and `region` as Type 2 and treats
 name and email as stable descriptive fields.

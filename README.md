@@ -1,38 +1,37 @@
 # warehouse-patterns
 
-**A senior BI engineer's reference on dimensional modelling** — star schemas,
+A senior BI engineer's reference on dimensional modelling - star schemas,
 slowly-changing dimensions, grain, conformed dimensions and the ETL/SSIS loading
-pattern — written up as prose *and* backed by a small star schema you can build
+pattern - written up as prose *and* backed by a small star schema you can build
 and query on synthetic data.
 
 [![ci](https://github.com/mikitadaroshkin/warehouse-patterns/actions/workflows/ci.yml/badge.svg)](https://github.com/mikitadaroshkin/warehouse-patterns/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](requirements.txt)
 
-Topics: data-warehouse, dimensional-modeling, star-schema, etl, sql, analytics-engineering
 
 ## What this is
 
-A **patterns write-up from my BI / data-warehousing years**, distilled into the
-decisions that actually matter when you model a warehouse — and paired with a
+A patterns write-up from my BI / data-warehousing years, distilled into the
+decisions that actually matter when you model a warehouse - and paired with a
 runnable demo so the patterns are more than assertions.
 
-- The **write-ups** live in [`docs/`](docs/): the design reasoning, with example DDL.
-- The **demo** ([`sql/`](sql/) + [`warehouse_demo/`](warehouse_demo/)) builds a
-  small retail-sales star schema in DuckDB, loads deterministic **synthetic** data,
+- The write-ups live in [`docs/`](docs/): the design reasoning, with example DDL.
+- The demo ([`sql/`](sql/) + [`warehouse_demo/`](warehouse_demo/)) builds a
+  small retail-sales star schema in DuckDB, loads deterministic synthetic data,
   applies a Slowly-Changing-Dimension Type-2 load, and runs the analytical queries
   whose output appears below.
 
 Scope, stated plainly so the README never claims more than the code does:
 
-- Every number in this README is **real, captured from `python build_demo.py`** on
-  the synthetic data in this repo — not illustrative, not hand-written.
-- All data is **synthetic and generated from a fixed seed**
-  ([`warehouse_demo/synthetic.py`](warehouse_demo/synthetic.py)). There is **no
-  client, proprietary, or real personal data** anywhere — no company names, no
+- Every number in this README is real, captured from `python build_demo.py` on
+  the synthetic data in this repo - not illustrative, not hand-written.
+- All data is synthetic and generated from a fixed seed
+  ([`warehouse_demo/synthetic.py`](warehouse_demo/synthetic.py)). There is no
+  client, proprietary, or real personal data anywhere - no company names, no
   real schemas. The BI experience is real; the examples are invented to demonstrate
   it.
-- This is a **reference / write-up repo**, not a service. The "product" is the
+- This is a reference / write-up repo, not a service. The "product" is the
   patterns and the runnable SQL demo, nothing more.
 
 ## Patterns
@@ -146,7 +145,7 @@ pip install -r requirements.txt
 python build_demo.py          # build + load + run the queries, print the output below
 ```
 
-The load summary from that run — 200 customers arriving as two source snapshots
+The load summary from that run - 200 customers arriving as two source snapshots
 six months apart, of which 54 changed a tracked attribute and were versioned:
 
 ```
@@ -164,7 +163,7 @@ load is safe to re-run after a failure.
 
 ### Query output (captured from the run)
 
-**Net revenue by category by month** — the canonical star query: slice the fact by
+Net revenue by category by month - the canonical star query: slice the fact by
 one dimension (`product.category`), roll up along another (`date.year_month`).
 [`sql/analytics/category_month_revenue.sql`](sql/analytics/category_month_revenue.sql)
 
@@ -178,7 +177,7 @@ Apparel           | 21501   | 18097   | 16368   | 19647   | 19633   | 24489   | 
 Office Supplies   | 5204    | 4613    | 6644    | 6986    | 5051    | 6255    | 34753
 ```
 
-**SCD Type-2 history** — the version trail for the first three customers that
+SCD Type-2 history - the version trail for the first three customers that
 changed. Windows tile the timeline (`valid_to` of v1 = `valid_from` of v2); exactly
 one row per customer is current.
 [`sql/analytics/scd2_customer_history.sql`](sql/analytics/scd2_customer_history.sql)
@@ -194,11 +193,11 @@ customer_key | customer_id | segment     | city       | region | valid_from | va
 203          | 5013        | Consumer    | Rivermouth | North  | 2024-07-01 | 9999-12-31 | True       | 2
 ```
 
-**Why SCD-2 earns its keep** — the same sales, attributed two ways.
+Why SCD-2 earns its keep - the same sales, attributed two ways.
 `point_in_time` joins each sale to the customer version current *on the sale date*;
 `restated_current` re-attributes every sale to the customer's *current* segment (the
 answer a Type-1 overwrite would give). Grand totals match to the cent; the
-per-segment split does not — and that gap is the history Type-1 would have destroyed.
+per-segment split does not - and that gap is the history Type-1 would have destroyed.
 [`sql/analytics/segment_revenue_pit_vs_current.sql`](sql/analytics/segment_revenue_pit_vs_current.sql)
 
 ```
@@ -224,32 +223,32 @@ python -c "import duckdb; print(duckdb.connect('warehouse.duckdb').execute(open(
 
 ## Design notes
 
-- **Grain before columns.** The fact's grain — *one product line on one order* — is
+- Grain before columns. The fact's grain - *one product line on one order* - is
   declared first; dimensionality and additivity follow from it. Fine grain is
   future-proof (aggregate up, never down); pre-aggregates come later, alongside the
-  atomic fact, never instead of it. → [grain](docs/03-grain-and-surrogate-keys.md)
-- **SCD tradeoffs are per attribute.** Type 1 (overwrite) for corrections where
+  atomic fact, never instead of it. -> [grain](docs/03-grain-and-surrogate-keys.md)
+- SCD tradeoffs are per attribute. Type 1 (overwrite) for corrections where
   history should re-state; Type 2 (versioned rows) for real-world changes where past
   facts belong to the old value. Most dimensions are hybrid. The demo tracks
   `segment` / `city` / `region` as Type 2 and quantifies the difference it makes.
-  → [SCD](docs/04-slowly-changing-dimensions.md)
-- **Star unless a branch forces a snowflake.** Redundant text in a dimension is
+  -> [SCD](docs/04-slowly-changing-dimensions.md)
+- Star unless a branch forces a snowflake. Redundant text in a dimension is
   nearly free on a columnar engine (dictionary-encoded); extra joins are not.
   Snowflake a branch only for a concrete master-data or scale reason you can name.
-  → [star vs snowflake](docs/01-star-vs-snowflake.md)
-- **Idempotent loads.** A load will fail halfway; the only safe design makes
+  -> [star vs snowflake](docs/01-star-vs-snowflake.md)
+- Idempotent loads. A load will fail halfway; the only safe design makes
   re-running it a no-op. Compare-before-write in the SCD-2 merge, set-based
   deterministic transforms, and reload-a-bounded-window keyed on a business date.
   The demo proves the SCD-2 load is idempotent (`254 -> 254`).
-  → [ETL & SSIS](docs/06-etl-ssis-loading.md)
-- **SSIS, honestly.** The loading logic here is the same decision tree the SSIS
-  Slowly-Changing-Dimension transform generates (Lookup → Conditional Split →
+  -> [ETL & SSIS](docs/06-etl-ssis-loading.md)
+- SSIS, honestly. The loading logic here is the same decision tree the SSIS
+  Slowly-Changing-Dimension transform generates (Lookup -> Conditional Split ->
   insert/expire). SSIS is a Windows runtime and cannot run in this repo, so the
   logic is implemented in portable SQL + Python; only the runtime differs.
 
 ## Running the tests
 
-The suite builds an in-memory warehouse and asserts on real query results — grain,
+The suite builds an in-memory warehouse and asserts on real query results - grain,
 one current version per customer, gap-free validity windows, load idempotency, and
 the point-in-time vs. restated attribution.
 
@@ -270,4 +269,4 @@ build_demo.py       entry point: build, load, run the queries, print output
 
 ## License
 
-[MIT](LICENSE) © 2026 Mikita Daroshkin
+[MIT](LICENSE) (c) 2026 Mikita Daroshkin
