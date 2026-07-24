@@ -2,7 +2,7 @@
 
 A working reference on dimensional modelling - star schemas,
 slowly-changing dimensions, grain, conformed dimensions and the ETL/SSIS loading
-pattern - written up as prose *and* backed by a small star schema you can build
+pattern - written up as field report and backed by a small star schema you can build
 and query on synthetic data.
 
 [![ci](https://github.com/mikitadaroshkin/warehouse-patterns/actions/workflows/ci.yml/badge.svg)](https://github.com/mikitadaroshkin/warehouse-patterns/actions/workflows/ci.yml)
